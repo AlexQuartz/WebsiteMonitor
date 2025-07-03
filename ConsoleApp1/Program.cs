@@ -5,7 +5,7 @@ namespace ConsoleApp1
     using System.IO;
     using System.Configuration;
     using System.Xml;
-    public class Test
+    public class WebsiteMonitor
     {
         public static async Task Main()
         {
