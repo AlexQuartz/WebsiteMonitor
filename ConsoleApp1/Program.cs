@@ -1,36 +1,39 @@
-﻿using System.Net;
-using System;
-using System.Net;
-using System.IO;
-using System.Configuration;
-using System.Xml;
-
 namespace ConsoleApp1
 {
+    using System.Net;
+    using System;
+    using System.IO;
+    using System.Configuration;
+    using System.Xml;
     public class Test
     {
-        public static void Main(string[] args)
+        public static async Task Main()
         {
-            using WebClient client = new WebClient();
+            HttpClient client = new HttpClient();
 
             string readURL = ConfigurationManager.AppSettings["checkURL"];
             string readString = ConfigurationManager.AppSettings["lookForString"];
 
-            // Add a user agent header in case the
-            // requested URI contains a query.
+            try
+            {
+                using HttpResponseMessage response = await client.GetAsync(readURL);
+                response.EnsureSuccessStatusCode();
+                string responseBody = await response.Content.ReadAsStringAsync();
 
-            client.Headers.Add("user-agent", "Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.2; .NET CLR 1.0.3705;)");
-
-            using Stream data = client.OpenRead(readURL);
-            using StreamReader reader = new StreamReader(data);
-            string s = reader.ReadToEnd();
-            
-            for (int i = 0; i < (s.Length - readString.Length); i++) {
-                if (s.Substring(i, readString.Length).Equals(readString)) {
-                    Console.WriteLine(i + " recognised \"" + readString + "\"");
-                    break;
+                for (int i = 0; i < (responseBody.Length - readString.Length); i++)
+                {
+                    if (responseBody.Substring(i, readString.Length).Equals(readString))
+                    {
+                        Console.WriteLine(i + " recognised \"" + readString + "\"");
+                        break;
+                    }
+                    else Console.WriteLine(i + " failed");
                 }
-                else Console.WriteLine(i + " failed");
+            }
+            catch (HttpRequestException e)
+            {
+                Console.WriteLine("\nException Caught!");
+                Console.WriteLine("Message :{0} ", e.Message);
             }
             
         }
