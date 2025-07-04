@@ -1,3 +1,4 @@
+//reading a list of websites from App.config and checking their HTMLs for a specified string
 namespace ConsoleApp1
 {
     using System.Net;
@@ -10,32 +11,57 @@ namespace ConsoleApp1
         public static async Task Main()
         {
             HttpClient client = new HttpClient();
+            var URLinProgram = new List<string>(ConfigurationManager.AppSettings["URLconfig"].Split(new char[] { ';' }));
+            var stringInProgram = new List<string>(ConfigurationManager.AppSettings["stringConfig"].Split(new char[] { ';' }));
+            //converting App.config variables into lists
 
-            string readURL = ConfigurationManager.AppSettings["checkURL"];
-            string readString = ConfigurationManager.AppSettings["lookForString"];
-
-            try
+            if (URLinProgram.Count != stringInProgram.Count)
             {
-                using HttpResponseMessage response = await client.GetAsync(readURL);
-                response.EnsureSuccessStatusCode();
-                string responseBody = await response.Content.ReadAsStringAsync();
-
-                for (int i = 0; i < (responseBody.Length - readString.Length); i++)
+                Console.WriteLine("Error: Length of URLconfig in App.config does not match length of stringConfig in App.config");
+            }
+            else
+            {
+                for (int j = 0; j < URLinProgram.Count; j++)
                 {
-                    if (responseBody.Substring(i, readString.Length).Equals(readString))
+                    try
                     {
-                        Console.WriteLine(i + " recognised \"" + readString + "\"");
-                        break;
+                        using HttpResponseMessage response = await client.GetAsync(URLinProgram[j]);
+                        response.EnsureSuccessStatusCode();
+                        string responseBody = await response.Content.ReadAsStringAsync();
+
+                        Console.WriteLine("Looking for \"" + stringInProgram[j] + "\" in \"" + URLinProgram[j] + "\"");
+                        Boolean success = false;
+
+                        for (int i = 0; i < (responseBody.Length - stringInProgram[j].Length); i++)
+                        {
+                            if (responseBody.Substring(i, stringInProgram[j].Length).Equals(stringInProgram[j]))
+                            {
+                                success = true;
+                                break;
+                            }
+                        }
+                        if (success)
+                        {
+                            Console.ForegroundColor = ConsoleColor.Green;
+                            Console.WriteLine("success");
+                            Console.ForegroundColor = ConsoleColor.White;
+                        }
+                        else
+                        {
+                            Console.ForegroundColor = ConsoleColor.Red;
+                            Console.WriteLine("failure");
+                            Console.ForegroundColor = ConsoleColor.White;
+                        }
+                        Console.WriteLine();
                     }
-                    else Console.WriteLine(i + " failed");
+                    catch (HttpRequestException e)
+                    {
+                        Console.WriteLine("\nException Caught!");
+                        Console.WriteLine("Message :{0} ", e.Message);
+                    }
                 }
             }
-            catch (HttpRequestException e)
-            {
-                Console.WriteLine("\nException Caught!");
-                Console.WriteLine("Message :{0} ", e.Message);
-            }
-            
+
         }
     }
 }
